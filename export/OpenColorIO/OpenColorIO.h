@@ -118,6 +118,23 @@ OCIO_NAMESPACE_ENTER
         ExceptionMissingFile(const ExceptionMissingFile&) throw();
     };
     
+#if OCIO_BUILD_CUDA
+    class OCIOEXPORT CudaException : public Exception
+    {
+     public:
+        //!cpp:function::
+        CudaException(const char *, int code=0) throw();
+        //!cpp:function::
+        CudaException(const CudaException&) throw();
+
+        //!cpp:function:: The error code returned by CUDA (e.g. from
+        // cudaGetLastError)
+        int errorCode() const throw();
+
+     private:
+        int m_code;
+    };
+#endif
     
     //!cpp:function::
     // OpenColorIO, during normal usage, tends to cache certain information

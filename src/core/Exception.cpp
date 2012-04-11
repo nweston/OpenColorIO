@@ -70,5 +70,15 @@ OCIO_NAMESPACE_ENTER
     : Exception(e)
     {}
 
+#if OCIO_BUILD_CUDA
+    CudaException::CudaException(const char *msg, int code) throw()
+    : Exception(msg), m_code(code)
+    {}
+
+
+    CudaException::CudaException(const CudaException& e) throw()
+    : Exception(e), m_code(e.m_code)
+    {}
+#endif
 }
 OCIO_NAMESPACE_EXIT
