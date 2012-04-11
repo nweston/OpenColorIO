@@ -949,6 +949,11 @@ OCIO_NAMESPACE_ENTER
     class OCIOEXPORT ImageDesc
     {
     public:
+#ifdef OCIO_BUILD_CUDA
+        //!cpp:function::
+        virtual bool dataIsOnCudaDevice() const;
+#endif
+
         //!cpp:function::
         virtual ~ImageDesc();
     private:
@@ -1059,6 +1064,44 @@ OCIO_NAMESPACE_ENTER
         PlanarImageDesc& operator= (const PlanarImageDesc &);
     };
     
+#if OCIO_BUILD_CUDA
+    ///////////////////////////////////////////////////////////////////////////
+    //!rst::
+    // CudaPackedImageDesc
+    // ^^^^^^^^^^^^^^^
+
+    //!cpp:class::
+    class OCIOEXPORT CudaPackedImageDesc : public PackedImageDesc
+    {
+    public:
+        CudaPackedImageDesc(float * data,
+                            long width, long height,
+                            long numChannels,
+                            ptrdiff_t chanStrideBytes = AutoStride,
+                            ptrdiff_t xStrideBytes = AutoStride,
+                            ptrdiff_t yStrideBytes = AutoStride);
+
+        //!cpp:function::
+        bool dataIsOnCudaDevice() const;
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    //!rst::
+    // CudaPlanarImageDesc
+    // ^^^^^^^^^^^^^^^
+
+    //!cpp:class::
+    class OCIOEXPORT CudaPlanarImageDesc : public PlanarImageDesc
+    {
+    public:
+        CudaPlanarImageDesc(float * rData, float * gData, float * bData,
+                            float * aData, long width, long height,
+                            ptrdiff_t yStrideBytes = AutoStride);
+
+        //!cpp:function::
+        bool dataIsOnCudaDevice() const;
+    };
+#endif
     
     ///////////////////////////////////////////////////////////////////////////
     //!rst::

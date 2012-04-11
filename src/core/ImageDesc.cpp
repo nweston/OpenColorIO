@@ -301,7 +301,6 @@ OCIO_NAMESPACE_ENTER
         return getImpl()->yStrideBytes_;
     }
     
-    
     ///////////////////////////////////////////////////////////////////////////
     
     
@@ -387,6 +386,42 @@ OCIO_NAMESPACE_ENTER
     {
         return getImpl()->yStrideBytes_;
     }
-    
+
+#if OCIO_BUILD_CUDA
+    ///////////////////////////////////////////////////////////////////////////
+    // CUDA Image Descs
+    bool ImageDesc::dataIsOnCudaDevice() const
+    {
+        return false;
+    }
+
+    CudaPackedImageDesc::CudaPackedImageDesc(float * data,
+                                             long width, long height,
+                                             long numChannels,
+                                             ptrdiff_t chanStrideBytes,
+                                             ptrdiff_t xStrideBytes,
+                                             ptrdiff_t yStrideBytes)
+        : PackedImageDesc(data, width, height, numChannels,
+                          chanStrideBytes, xStrideBytes, yStrideBytes)
+    {}
+
+    bool CudaPackedImageDesc::dataIsOnCudaDevice() const
+    {
+        return true;
+    }
+
+    CudaPlanarImageDesc::CudaPlanarImageDesc(float * rData, float * gData,
+                                             float * bData, float * aData,
+                                             long width, long height,
+                                             ptrdiff_t yStrideBytes)
+        : PlanarImageDesc(rData, gData, bData, aData,
+                          width, height, yStrideBytes)
+    {}
+
+    bool CudaPlanarImageDesc::dataIsOnCudaDevice() const
+    {
+        return true;
+    }
+#endif
 }
 OCIO_NAMESPACE_EXIT
