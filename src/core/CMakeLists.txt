@@ -1,6 +1,8 @@
 ###############################################################################
 ### OCIO CORE ###
 
+include(FindCUDA)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}/export/
     ${CMAKE_BINARY_DIR}/export/
@@ -9,6 +11,7 @@ include_directories(
 )
 
 file(GLOB_RECURSE core_src_files "${CMAKE_SOURCE_DIR}/src/core/*.cpp")
+file(GLOB_RECURSE core_cuda_files "${CMAKE_SOURCE_DIR}/src/core/*.cu")
 file(GLOB_RECURSE core_export_headers "${CMAKE_SOURCE_DIR}/export/OpenColorIO/*.h")
 
 message(STATUS "Create OpenColorABI.h from OpenColorABI.h.in")
@@ -19,7 +22,11 @@ list(APPEND core_export_headers ${CMAKE_BINARY_DIR}/export/OpenColorABI.h)
 # SHARED
 
 if(OCIO_BUILD_SHARED)
-    add_library(OpenColorIO SHARED ${core_src_files})
+    if(OCIO_BUILD_CUDA)
+        CUDA_ADD_LIBRARY(OpenColorIO SHARED ${core_src_files} ${core_cuda_files})
+    else()
+        add_library(OpenColorIO SHARED ${core_src_files})
+    endif()
     add_dependencies(OpenColorIO tinyxml YAML_CPP_LOCAL)
     if(WIN32)
         target_link_libraries(OpenColorIO
@@ -46,7 +53,12 @@ endif()
 
 if(OCIO_BUILD_STATIC)
     list(REMOVE_ITEM core_src_files ${CMAKE_SOURCE_DIR}/src/core/UnitTest.cpp)
-    add_library(OpenColorIO_STATIC STATIC ${core_src_files})
+
+    if(OCIO_BUILD_CUDA)
+        CUDA_ADD_LIBRARY(OpenColorIO_STATIC STATIC ${core_src_files} ${core_cuda_files})
+    else()
+        add_library(OpenColorIO_STATIC STATIC ${core_src_files})
+    endif()
     add_dependencies(OpenColorIO_STATIC tinyxml YAML_CPP_LOCAL)
     if(WIN32)
         target_link_libraries(OpenColorIO_STATIC

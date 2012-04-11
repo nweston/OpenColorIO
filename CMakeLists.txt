@@ -20,6 +20,7 @@ option(OCIO_BUILD_NUKE "Set to OFF to disable building nuke plugins" ON)
 option(OCIO_BUILD_DOCS "Specify whether to build documentation" OFF)
 option(OCIO_BUILD_TESTS "Specify whether to build unittests" OFF)
 option(OCIO_BUILD_PYGLUE "Specify whether to build python bindings" ON)
+option(OCIO_BUILD_CUDA "Specify whether to build CUDA code path" OFF)
 option(OCIO_LINK_PYGLUE "Set to OFF to disable the linking of PYGLUE to python itself" ON)
 option(OCIO_BUILD_JNIGLUE "Specify whether to build java bindings" OFF)
 option(OCIO_STATIC_JNIGLUE "Specify whether to statically link ocio to the java bindings" ON)
@@ -251,6 +252,23 @@ if(OCIO_BUILD_TRUELIGHT)
     else()
         messageonce("Not building truelight transform support. Add the flag -D TRUELIGHT_INSTALL_PATH=... or set the TRUELIGHT_ROOT environment variable")
     endif()
+endif()
+
+###############################################################################
+### CUDA ###
+
+messageonce("CUDA Support: ${OCIO_BUILD_CUDA}")
+
+if(OCIO_BUILD_CUDA)
+    if(NOT OCIO_USE_BOOST_PTR)
+        message(FATAL_ERROR "CUDA does not support C++0x. You must specify OCIO_USE_BOOST_PTR when building with CUDA support.")
+    endif()
+
+    FIND_PACKAGE(CUDA)
+    set(OCIO_BUILD_CUDA 1)
+    set(CUDA_NVCC_FLAGS "-arch;compute_20")
+else()
+    set(OCIO_BUILD_CUDA 0)
 endif()
 
 ###############################################################################
