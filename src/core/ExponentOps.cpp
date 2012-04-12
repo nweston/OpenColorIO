@@ -32,32 +32,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <OpenColorIO/OpenColorIO.h>
 
+#include "ExponentOpsInternal.h"
 #include "GpuShaderUtils.h"
 #include "MatrixOps.h"
 #include "MathUtils.h"
 
 OCIO_NAMESPACE_ENTER
 {
-    namespace
-    {
-        void ApplyClampExponent(float* rgbaBuffer, long numPixels,
-                                const float* exp4)
-        {
-            for(long pixelIndex=0; pixelIndex<numPixels; ++pixelIndex)
-            {
-                rgbaBuffer[0] = powf( std::max(0.0f, rgbaBuffer[0]), exp4[0]);
-                rgbaBuffer[1] = powf( std::max(0.0f, rgbaBuffer[1]), exp4[1]);
-                rgbaBuffer[2] = powf( std::max(0.0f, rgbaBuffer[2]), exp4[2]);
-                rgbaBuffer[3] = powf( std::max(0.0f, rgbaBuffer[3]), exp4[3]);
-                
-                rgbaBuffer += 4;
-            }
-        }
-        
-        const int FLOAT_DECIMALS = 7;
-    }
-    
-    
+    CudaOp * makeCudaExponentOp(const float * exp4);
+
     namespace
     {
         class ExponentOp : public Op
@@ -68,7 +51,10 @@ OCIO_NAMESPACE_ENTER
             virtual ~ExponentOp();
             
             virtual OpRcPtr clone() const;
-            
+#if OCIO_BUILD_CUDA
+            virtual CudaOp * getCudaOp() const;
+#endif
+
             virtual std::string getInfo() const;
             virtual std::string getCacheID() const;
             
@@ -95,14 +81,15 @@ OCIO_NAMESPACE_ENTER
             // Set in finalize
             std::string m_cacheID;
         };
-        
+
+
         typedef OCIO_SHARED_PTR<ExponentOp> ExponentOpRcPtr;
-        
         
         ExponentOp::ExponentOp(const float * exp4,
                                TransformDirection direction):
                                Op()
         {
+
             if(direction == TRANSFORM_DIR_UNKNOWN)
             {
                 throw Exception("Cannot create ExponentOp with unspecified transform direction.");
@@ -214,7 +201,13 @@ OCIO_NAMESPACE_ENTER
             shader << "max(" << pixelName << ", " << GpuTextHalf4(zerovec, lang) << ")";
             shader << ", " << GpuTextHalf4(m_exp4, lang) << ");\n";
         }
-        
+
+#if OCIO_BUILD_CUDA
+        CudaOp * ExponentOp::getCudaOp() const
+        {
+            return makeCudaExponentOp(m_exp4);
+        }
+#endif
     }  // Anon namespace
     
     

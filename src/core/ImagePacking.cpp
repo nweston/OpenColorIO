@@ -43,14 +43,14 @@ OCIO_NAMESPACE_ENTER
     {
         // GENERIC CASE, SLOW BUT ALWAYS WORKS
         
-        void PackRGBAFromImageDesc_Generic(const GenericImageDesc& srcImg,
-                                           float* outputBuffer,
-                                           int* numPixelsCopied,
-                                           int outputBufferSize,
-                                           long imagePixelStartIndex)
-        {
-            assert(outputBuffer);
-            assert(numPixelsCopied);
+    DEVICE void PackRGBAFromImageDesc_Generic(const GenericImageDesc& srcImg,
+                                              float* outputBuffer,
+                                              int* numPixelsCopied,
+                                              int outputBufferSize,
+                                              long imagePixelStartIndex)
+    {
+        assert(outputBuffer);
+        assert(numPixelsCopied);
             
             long imgWidth = srcImg.width;
             long imgHeight = srcImg.height;
@@ -183,10 +183,10 @@ OCIO_NAMESPACE_ENTER
             }
         }
         
-        void UnpackRGBAToImageDesc_Generic(GenericImageDesc& dstImg,
-                                           float* inputBuffer,
-                                           int numPixelsToUnpack,
-                                           long imagePixelStartIndex)
+        DEVICE void UnpackRGBAToImageDesc_Generic(GenericImageDesc& dstImg,
+                                                  float* inputBuffer,
+                                                  int numPixelsToUnpack,
+                                                  long imagePixelStartIndex)
         {
             assert(inputBuffer);
             

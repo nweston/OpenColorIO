@@ -108,5 +108,16 @@ OCIO_NAMESPACE_ENTER
             ops[i]->finalize();
         }
     }
+
+#if OCIO_BUILD_CUDA
+    HOST CudaOp * Op::getCudaOp() const
+    {
+        // TODO: eventually all Ops will override this in order to support
+        // CUDA, and we won't need an implementation of it at the Op level.
+        throw CudaException("CUDA is not supported for this operation.");
+
+        return NULL;
+    }
+#endif
 }
 OCIO_NAMESPACE_EXIT

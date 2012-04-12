@@ -966,7 +966,7 @@ OCIO_NAMESPACE_ENTER
     class OCIOEXPORT ImageDesc
     {
     public:
-#ifdef OCIO_BUILD_CUDA
+#if OCIO_BUILD_CUDA
         //!cpp:function::
         virtual bool dataIsOnCudaDevice() const;
 #endif

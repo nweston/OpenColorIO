@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003-2010 Sony Pictures Imageworks Inc., et al.
+Copyright (c) 2012 Sony Pictures Imageworks Inc., et al.
 All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,52 +26,27 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#ifndef INCLUDED_OCIO_IMAGEPACKING_H
-#define INCLUDED_OCIO_IMAGEPACKING_H
-
-#include <stdint.h>
-
-#include <OpenColorIO/OpenColorIO.h>
-
-#include "CudaSupport.h"
+#include "Op.h"
 
 OCIO_NAMESPACE_ENTER
 {
-    struct GenericImageDesc
+    namespace
     {
-        uint32_t width;
-        uint32_t height;
-        ptrdiff_t xStrideBytes;
-        ptrdiff_t yStrideBytes;
-        
-        float* rData;
-        float* gData;
-        float* bData;
-        float* aData;
+        DEVICE void ApplyClampExponent(float* rgbaBuffer, long numPixels,
+                                const float* exp4)
+        {
+            for(long pixelIndex=0; pixelIndex<numPixels; ++pixelIndex)
+            {
+                rgbaBuffer[0] = powf( max(0.0f, rgbaBuffer[0]), exp4[0]);
+                rgbaBuffer[1] = powf( max(0.0f, rgbaBuffer[1]), exp4[1]);
+                rgbaBuffer[2] = powf( max(0.0f, rgbaBuffer[2]), exp4[2]);
+                rgbaBuffer[3] = powf( max(0.0f, rgbaBuffer[3]), exp4[3]);
 
-#ifndef __CUDACC__
-        GenericImageDesc();
-        ~GenericImageDesc();
-        
-        // Resolves all AutoStride
-        void init(const ImageDesc& img);
-        
-        bool isPackedRGBA() const;
-#endif
-    };
-    
-    DEVICE CUDASTATIC void PackRGBAFromImageDesc(const GenericImageDesc& srcImg,
-                                                 float* outputBuffer,
-                                                 int* numPixelsCopied,
-                                                 int outputBufferSize,
-                                                 long imagePixelStartIndex);
-    
-    DEVICE CUDASTATIC void UnpackRGBAToImageDesc(GenericImageDesc& dstImg,
-                                                 float* inputBuffer,
-                                                 int numPixelsToUnpack,
-                                                 long imagePixelStartIndex);
+                rgbaBuffer += 4;
+            }
+        }
+
+        const int FLOAT_DECIMALS = 7;
+    }
 }
 OCIO_NAMESPACE_EXIT
-
-#endif

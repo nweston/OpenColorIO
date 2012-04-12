@@ -209,26 +209,50 @@ OCIO_NAMESPACE_ENTER
     {
         if(m_cpuOps.empty()) return;
         
-        ScanlineHelper scanlineHelper(img);
-        float * rgbaBuffer = 0;
-        long numPixels = 0;
-        
-        while(true)
+#if OCIO_BUILD_CUDA
+        if (img.dataIsOnCudaDevice()) {
+            applyCuda(img);
+        }
+        else
+#endif
         {
-            scanlineHelper.prepRGBAScanline(&rgbaBuffer, &numPixels);
-            if(numPixels == 0) break;
-            if(!rgbaBuffer)
-                throw Exception("Cannot apply transform; null image.");
-            
-            for(OpRcPtrVec::size_type i=0, size = m_cpuOps.size(); i<size; ++i)
+            ScanlineHelper scanlineHelper(img);
+            float * rgbaBuffer = 0;
+            long numPixels = 0;
+
+            while(true)
             {
-                m_cpuOps[i]->apply(rgbaBuffer, numPixels);
-            }
+                scanlineHelper.prepRGBAScanline(&rgbaBuffer, &numPixels);
+                if(numPixels == 0) break;
+                if(!rgbaBuffer)
+                    throw Exception("Cannot apply transform; null image.");
             
-            scanlineHelper.finishRGBAScanline();
+                for(OpRcPtrVec::size_type i=0, size = m_cpuOps.size(); i<size; ++i)
+                {
+                    m_cpuOps[i]->apply(rgbaBuffer, numPixels);
+                }
+
+                scanlineHelper.finishRGBAScanline();
+            }
         }
     }
-    
+
+#if OCIO_BUILD_CUDA
+    void Processor::Impl::applyCuda(ImageDesc &img) const
+    {
+        std::vector<CudaOp *> cudaOps;
+        for(OpRcPtrVec::size_type i=0, size = m_cpuOps.size(); i<size; ++i)
+        {
+            cudaOps.push_back(m_cpuOps[i]->getCudaOp());
+        }
+
+        GenericImageDesc desc;
+        desc.init(img);
+
+        ApplyCudaOps(cudaOps, desc);
+    }
+#endif
+
     void Processor::Impl::applyRGB(float * pixel) const
     {
         if(m_cpuOps.empty()) return;

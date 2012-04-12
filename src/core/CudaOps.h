@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003-2010 Sony Pictures Imageworks Inc., et al.
+Copyright (c) 2012 Sony Pictures Imageworks Inc., et al.
 All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,52 +26,35 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#ifndef INCLUDE_OCIO_CUDA_OPS_H
+#define INCLUDE_OCIO_CUDA_OPS_H
 
-#ifndef INCLUDED_OCIO_IMAGEPACKING_H
-#define INCLUDED_OCIO_IMAGEPACKING_H
-
-#include <stdint.h>
-
-#include <OpenColorIO/OpenColorIO.h>
+#if OCIO_BUILD_CUDA
 
 #include "CudaSupport.h"
 
 OCIO_NAMESPACE_ENTER
 {
-    struct GenericImageDesc
+    class CudaOp
     {
-        uint32_t width;
-        uint32_t height;
-        ptrdiff_t xStrideBytes;
-        ptrdiff_t yStrideBytes;
-        
-        float* rData;
-        float* gData;
-        float* bData;
-        float* aData;
+     public:
+        HOST DEVICE virtual ~CudaOp() {};
+        DEVICE virtual void apply(float* rgbaBuffer) const = 0;
 
-#ifndef __CUDACC__
-        GenericImageDesc();
-        ~GenericImageDesc();
-        
-        // Resolves all AutoStride
-        void init(const ImageDesc& img);
-        
-        bool isPackedRGBA() const;
-#endif
+        // Return a clone which resides in device memory.
+        HOST virtual CudaOp * deviceClone() const = 0;
     };
-    
-    DEVICE CUDASTATIC void PackRGBAFromImageDesc(const GenericImageDesc& srcImg,
-                                                 float* outputBuffer,
-                                                 int* numPixelsCopied,
-                                                 int outputBufferSize,
-                                                 long imagePixelStartIndex);
-    
-    DEVICE CUDASTATIC void UnpackRGBAToImageDesc(GenericImageDesc& dstImg,
-                                                 float* inputBuffer,
-                                                 int numPixelsToUnpack,
-                                                 long imagePixelStartIndex);
+
+    // Note: CudaOpRcPtr is deliberately omitted.
+    // CUDA ops will typically reside in device memory, in which case their
+    // destructors must be called from device code. Wrapping them in a
+    // host-side smart pointer will get us in trouble.
+
+    ////////////////////////////////////////////
+    // Factory functions for Cuda ops
+    HOST CudaOp * makeCudaExponentOp(const float * exp4);
 }
 OCIO_NAMESPACE_EXIT
+#endif
 
 #endif

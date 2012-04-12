@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <OpenColorIO/OpenColorIO.h>
 
+#include "ImagePacking.h"
 #include "Mutex.h"
 #include "Op.h"
 
@@ -103,7 +104,9 @@ OCIO_NAMESPACE_ENTER
         
         void calcGpuShaderText(std::ostream & shader,
                                const GpuShaderDesc & shaderDesc) const;
-    
+
+     private:
+        void applyCuda(ImageDesc &img) const;
     };
     
     // TODO: Move these!
@@ -122,6 +125,10 @@ OCIO_NAMESPACE_ENTER
                   const Config & config,
                   const ConstTransformRcPtr & transform,
                   TransformDirection dir);
+
+    // Apply CUDA ops to image on the device
+    void ApplyCudaOps(const std::vector<CudaOp *> &cuda_ops,
+                      GenericImageDesc &img);
 }
 OCIO_NAMESPACE_EXIT
 

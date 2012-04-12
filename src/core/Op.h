@@ -30,10 +30,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef INCLUDED_OCIO_OP_H
 #define INCLUDED_OCIO_OP_H
 
-#include <OpenColorIO/OpenColorIO.h>
-
 #include <sstream>
 #include <vector>
+
+#include <OpenColorIO/OpenColorIO.h>
+
+#include "CudaOps.h"
+#include "CudaSupport.h"
 
 OCIO_NAMESPACE_ENTER
 {
@@ -102,7 +105,6 @@ OCIO_NAMESPACE_ENTER
             
             virtual void apply(float* rgbaBuffer, long numPixels) const = 0;
             
-            
             //! Does this op support gpu shader text generation
             virtual bool supportsGpuShader() const = 0;
             
@@ -111,10 +113,15 @@ OCIO_NAMESPACE_ENTER
                                         const std::string & pixelName,
                                         const GpuShaderDesc & shaderDesc) const = 0;
             
+#if OCIO_BUILD_CUDA
+            // Return an equivalent CudaOp which resides in device memory
+            virtual HOST CudaOp * getCudaOp() const;
+#endif
+
         private:
             Op& operator= (const Op &);
     };
-    
+
     std::ostream& operator<< (std::ostream&, const Op&);
 }
 OCIO_NAMESPACE_EXIT

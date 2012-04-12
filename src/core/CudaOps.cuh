@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003-2010 Sony Pictures Imageworks Inc., et al.
+Copyright (c) 2012 Sony Pictures Imageworks Inc., et al.
 All Rights Reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,52 +26,53 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#ifndef INCLUDED_OCIO_IMAGEPACKING_H
-#define INCLUDED_OCIO_IMAGEPACKING_H
-
-#include <stdint.h>
-
-#include <OpenColorIO/OpenColorIO.h>
+#include "CudaOps.h"
 
 #include "CudaSupport.h"
+#include "ExponentOpsInternal.h"
 
 OCIO_NAMESPACE_ENTER
 {
-    struct GenericImageDesc
-    {
-        uint32_t width;
-        uint32_t height;
-        ptrdiff_t xStrideBytes;
-        ptrdiff_t yStrideBytes;
-        
-        float* rData;
-        float* gData;
-        float* bData;
-        float* aData;
 
-#ifndef __CUDACC__
-        GenericImageDesc();
-        ~GenericImageDesc();
-        
-        // Resolves all AutoStride
-        void init(const ImageDesc& img);
-        
-        bool isPackedRGBA() const;
-#endif
-    };
-    
-    DEVICE CUDASTATIC void PackRGBAFromImageDesc(const GenericImageDesc& srcImg,
-                                                 float* outputBuffer,
-                                                 int* numPixelsCopied,
-                                                 int outputBufferSize,
-                                                 long imagePixelStartIndex);
-    
-    DEVICE CUDASTATIC void UnpackRGBAToImageDesc(GenericImageDesc& dstImg,
-                                                 float* inputBuffer,
-                                                 int numPixelsToUnpack,
-                                                 long imagePixelStartIndex);
-}
+    namespace
+    {
+        class CudaExponentOp : public CudaOp
+        {
+        public:
+            HOST DEVICE CudaExponentOp(const float * exp4);
+            HOST DEVICE virtual ~CudaExponentOp();
+            DEVICE virtual void apply(float* rgbaBuffer) const;
+            HOST virtual CudaOp * deviceClone() const;
+        private:
+            float m_exp4[4];
+        };
+
+        CudaExponentOp::CudaExponentOp(const float * exp4) : CudaOp()
+        {
+            for(int i=0; i<4; ++i)
+                m_exp4[i] = exp4[i];
+        }
+
+        CudaExponentOp::~CudaExponentOp()
+        { }
+
+        CudaOp * CudaExponentOp::deviceClone() const
+        {
+            return copyObjectToCudaDevice<CudaExponentOp>(*this);
+        }
+
+        void CudaExponentOp::apply(float* rgbaBuffer) const
+        {
+            if(!rgbaBuffer) return;
+
+            ApplyClampExponent(rgbaBuffer, 1, m_exp4);
+        }
+    }
+
+    CudaOp * makeCudaExponentOp(const float * exp4)
+    {
+        return CudaExponentOp(exp4).deviceClone();
+    }
+ }
 OCIO_NAMESPACE_EXIT
 
-#endif
