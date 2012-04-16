@@ -32,6 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <OpenColorIO/OpenColorIO.h>
 
+#include "CudaOps.h"
 #include "ExponentOpsInternal.h"
 #include "GpuShaderUtils.h"
 #include "MatrixOps.h"
@@ -39,8 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 OCIO_NAMESPACE_ENTER
 {
-    CudaOp * makeCudaExponentOp(const float * exp4);
-
     namespace
     {
         class ExponentOp : public Op

@@ -126,9 +126,11 @@ OCIO_NAMESPACE_ENTER
                   const ConstTransformRcPtr & transform,
                   TransformDirection dir);
 
+#if OCIO_BUILD_CUDA
     // Apply CUDA ops to image on the device
     void ApplyCudaOps(const std::vector<CudaOp *> &cuda_ops,
                       GenericImageDesc &img);
+#endif
 }
 OCIO_NAMESPACE_EXIT
 

@@ -29,7 +29,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef INCLUDE_OCIO_CUDA_SUPPORT_H
 #define INCLUDE_OCIO_CUDA_SUPPORT_H
 
+#if OCIO_BUILD_CUDA
 #include <cuda_runtime_api.h>
+#endif
 
 #include <OpenColorIO/OpenColorIO.h>
 
@@ -49,9 +51,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 OCIO_NAMESPACE_ENTER
 {
-  // Check error code and throw an exception if != cudaSuccess
-  void CheckCudaError(cudaError_t err);
-
   // std::max isn't available as a device function in CUDA, so we need to
   // reimplement it
   template <class T>
@@ -62,6 +61,10 @@ OCIO_NAMESPACE_ENTER
       return std::max(a, b);
 #endif
   }
+
+#if OCIO_BUILD_CUDA
+  // Check error code and throw an exception if != cudaSuccess
+  void CheckCudaError(cudaError_t err);
 
 #ifdef __CUDACC__
   template <class T>
@@ -99,6 +102,7 @@ OCIO_NAMESPACE_ENTER
     return NULL;
 #endif
   }
+#endif
 }
 OCIO_NAMESPACE_EXIT
 
