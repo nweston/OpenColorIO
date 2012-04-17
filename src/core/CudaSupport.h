@@ -66,42 +66,6 @@ OCIO_NAMESPACE_ENTER
   // Check error code and throw an exception if != cudaSuccess
   void CheckCudaError(cudaError_t err);
 
-#ifdef __CUDACC__
-  template <class T>
-  __global__ void copyToDeviceKernel(T **result, const T obj)
-  {
-    *result = new T(obj);
-  }
-#endif
-
-  // Set result to point to a newly-allocated copy of obj which resides in
-  // device memory.
-
-  // Class T must have a copy constructor which can run on the device.
-  template <class T>
-  T *copyObjectToCudaDevice(const T &obj)
-  {
-#ifdef __CUDACC__
-    // Allocate a pointer on the device to hold the address of the new object
-    T **device_result = NULL;
-    CheckCudaError(cudaMalloc(&device_result, sizeof(T *)));
-
-    copyToDeviceKernel<T><<<1, 1>>>(device_result, obj);
-
-    // Wait for kernel to finish and check error
-    cudaThreadSynchronize();
-    CheckCudaError(cudaGetLastError());
-
-    // Copy the address of the new object back to the CPU
-    T *host_result = NULL;
-    CheckCudaError(cudaMemcpy(&host_result, device_result, sizeof(T *),
-                              cudaMemcpyDeviceToHost));
-
-    return host_result;
-#else
-    return NULL;
-#endif
-  }
 #endif
 }
 OCIO_NAMESPACE_EXIT

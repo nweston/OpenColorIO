@@ -49,9 +49,11 @@ OCIO_NAMESPACE_ENTER
                                               int outputBufferSize,
                                               long imagePixelStartIndex)
     {
+#ifndef __CUDACC__
         assert(outputBuffer);
         assert(numPixelsCopied);
-            
+#endif
+
             long imgWidth = srcImg.width;
             long imgHeight = srcImg.height;
             long imgPixels = imgWidth * imgHeight;
@@ -188,8 +190,10 @@ OCIO_NAMESPACE_ENTER
                                                   int numPixelsToUnpack,
                                                   long imagePixelStartIndex)
         {
+#ifndef __CUDACC__
             assert(inputBuffer);
-            
+#endif
+
             long imgWidth = dstImg.width;
             long imgHeight = dstImg.height;
             long imgPixels = imgWidth * imgHeight;

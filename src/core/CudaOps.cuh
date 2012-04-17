@@ -33,20 +33,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 OCIO_NAMESPACE_ENTER
 {
+    CudaOp::~CudaOp()
+    {}
 
     namespace
     {
         class CudaExponentOp : public CudaOp
         {
         public:
-            HOST DEVICE CudaExponentOp(const float * exp4);
-            HOST DEVICE virtual ~CudaExponentOp();
+            DEVICE CudaExponentOp(const float * exp4);
+            DEVICE virtual ~CudaExponentOp();
             DEVICE virtual void apply(float* rgbaBuffer) const;
-            HOST virtual CudaOp * deviceClone() const;
         private:
             float m_exp4[4];
         };
+    }
 
+    namespace {
         CudaExponentOp::CudaExponentOp(const float * exp4) : CudaOp()
         {
             for(int i=0; i<4; ++i)
@@ -56,11 +59,6 @@ OCIO_NAMESPACE_ENTER
         CudaExponentOp::~CudaExponentOp()
         { }
 
-        CudaOp * CudaExponentOp::deviceClone() const
-        {
-            return copyObjectToCudaDevice<CudaExponentOp>(*this);
-        }
-
         void CudaExponentOp::apply(float* rgbaBuffer) const
         {
             if(!rgbaBuffer) return;
@@ -69,9 +67,23 @@ OCIO_NAMESPACE_ENTER
         }
     }
 
+    __device__ volatile static CudaExponentOp * newExponentOp;
+    __global__ void makeExponentOpKernel(float4 exp4)
+    {
+        newExponentOp = new CudaExponentOp(reinterpret_cast<float *>(&exp4));
+    }
+
     CudaOp * makeCudaExponentOp(const float * exp4)
     {
-        return CudaExponentOp(exp4).deviceClone();
+        // Create a new op on the device heap
+        makeExponentOpKernel<<<1, 1>>>(*reinterpret_cast<const float4 *>(exp4));
+
+        // Copy the address of the new object back to the CPU
+        CudaExponentOp *host_result = NULL;
+        CheckCudaError(cudaMemcpyFromSymbol(&host_result, newExponentOp,
+                                            sizeof(CudaExponentOp *)));
+
+        return host_result;
     }
  }
 OCIO_NAMESPACE_EXIT

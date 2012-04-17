@@ -38,17 +38,14 @@ OCIO_NAMESPACE_ENTER
     class CudaOp
     {
      public:
-        HOST DEVICE virtual ~CudaOp() {};
+        DEVICE virtual ~CudaOp();
         DEVICE virtual void apply(float* rgbaBuffer) const = 0;
-
-        // Return a clone which resides in device memory.
-        HOST virtual CudaOp * deviceClone() const = 0;
     };
 
     // Note: CudaOpRcPtr is deliberately omitted.
-    // CUDA ops will typically reside in device memory, in which case their
-    // destructors must be called from device code. Wrapping them in a
-    // host-side smart pointer will get us in trouble.
+    // CUDA ops must reside in device memory, and be allocated/freed from
+    // device code. Wrapping them in a host-side smart pointer will get us in
+    // trouble.
 
     ////////////////////////////////////////////
     // Factory functions for Cuda ops
