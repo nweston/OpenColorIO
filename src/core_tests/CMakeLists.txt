@@ -11,8 +11,13 @@ include_directories(
     )
 
 file( GLOB_RECURSE core_test_src_files "${CMAKE_SOURCE_DIR}/src/core/*.cpp" )
+file( GLOB_RECURSE core_test_cuda_files "${CMAKE_SOURCE_DIR}/src/core/*.cu" )
 
-add_executable(ocio_core_tests ${core_test_src_files})
+if(OCIO_BUILD_CUDA)
+    cuda_add_executable(ocio_core_tests ${core_test_src_files} ${core_test_cuda_files})
+else()
+    add_executable(ocio_core_tests ${core_test_src_files})
+endif()
 add_dependencies(ocio_core_tests tinyxml YAML_CPP_LOCAL)
 set_target_properties(ocio_core_tests PROPERTIES
     COMPILE_FLAGS "${EXTERNAL_COMPILE_FLAGS}"
